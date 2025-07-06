@@ -2,22 +2,45 @@ pipeline {
   agent any
 
   environment {
-    SSH_KEY = credentials('timeflip-key')
+    IMAGE_NAME = "timeflip-app"
+    CONTAINER_NAME = "timeflip-container"
   }
 
   stages {
-    stage('Checkout') {
+    stage('Clone Repo') {
       steps {
         git url: 'https://github.com/hemananthDev/timeflip.git', branch: 'main'
       }
     }
 
-    stage('Run Flask App') {
+    stage('Build Docker Image') {
       steps {
         sh '''
-          echo "$SSH_KEY" > .ssh_key
-          chmod 600 .ssh_key
-          nohup python3 app.py > flask.log 2>&1 &
+          docker build -t $IMAGE_NAME .
+        '''
+      }
+    }
+
+    stage('Stop Old Container') {
+      steps {
+        sh '''
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
+        '''
+      }
+    }
+
+    stage('Run New Container') {
+      steps {
+        sh '''
+          docker run -d \
+            --name $CONTAINER_NAME \
+            -p 5000:5000 \
+            --log-driver=awslogs \
+            --log-opt awslogs-region=ap-south-1 \
+            --log-opt awslogs-group=timeflip-logs \
+            --log-opt awslogs-stream=$CONTAINER_NAME \
+            $IMAGE_NAME
         '''
       }
     }
