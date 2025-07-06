@@ -1,56 +1,60 @@
-# -------------------------------
 # Python bytecode and cache
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
-# -------------------------------
-# Virtual environment
+# Virtual environments
 .venv/
 venv/
 ENV/
 env/
 *.egg-info/
 
-# -------------------------------
-# VSCode settings
+# VSCode config
 .vscode/
 
-# -------------------------------
-# System-specific files
+# System files
 .DS_Store
 Thumbs.db
 
-# -------------------------------
-# Terraform state and config
-upload/terraform/.terraform/
-upload/terraform/.terraform.lock.hcl
-upload/terraform/terraform.tfstate
-upload/terraform/terraform.tfstate.backup
-upload/terraform/crash.log
+# Logs
+*.log
 
-# -------------------------------
 # Secrets and keys
 *.pem
 *.key
 *.crt
 *.pub
 
-# -------------------------------
-# Terraform IP output
-instance_ip.txt
+# Terraform state and config
+upload/terraform/.terraform/
+upload/terraform/.terraform.lock.hcl
+upload/terraform/terraform.tfstate
+upload/terraform/terraform.tfstate.backup
+upload/terraform/crash.log
+upload/terraform/instance_ip.txt
 
-# -------------------------------
-# Logs
-*.log
-
-# -------------------------------
-# Docker build cache
-*.tar
+# Docker
 .dockerignore
+*.tar
 
-# -------------------------------
-# Build output
-.dist/
+# PyInstaller or build artifacts
 build/
+dist/
+*.spec
+
+# Ansible cache
+*.retry
+.ansible/
+
+# CloudWatch Agent installer
+/tmp/amazon-cloudwatch-agent.deb
+
+# Jenkins workspace (if ever mounted)
+jenkins_home/
+
+# Other temp or test files
+*.bak
+*.tmp
+*.swp
