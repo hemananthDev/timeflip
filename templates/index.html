@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TimeFlip Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🕒 IST ↔ EST Time Converter</h1>
+        <form method="POST">
+            <label for="input_time">Time (HH:MM):</label>
+            <input type="text" name="input_time" required placeholder="e.g. 13:45">
+
+            <label for="from_zone">From:</label>
+            <select name="from_zone">
+                <option value="Asia/Kolkata">IST (Asia/Kolkata)</option>
+                <option value="US/Eastern">EST (US/Eastern)</option>
+            </select>
+
+            <label for="to_zone">To:</label>
+            <select name="to_zone">
+                <option value="Asia/Kolkata">IST (Asia/Kolkata)</option>
+                <option value="US/Eastern">EST (US/Eastern)</option>
+            </select>
+
+            <input type="submit" value="Convert">
+        </form>
+
+        {% if result %}
+            <div class="result-box">
+                <strong>{{ result }}</strong>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
