@@ -1,0 +1,46 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+
+# VSCode settings (optional)
+.vscode/
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# Terraform state and configuration files
+upload/terraform/.terraform/
+upload/terraform/.terraform.lock.hcl
+upload/terraform/terraform.tfstate
+upload/terraform/terraform.tfstate.backup
+upload/terraform/crash.log
+
+# Secrets or keys
+*.pem
+*.key
+*.crt
+*.pub
+
+# Ignore instance_ip.txt (Terraform output)
+instance_ip.txt
+
+# Logs
+*.log
+
+# Docker build cache
+*.tar
+.dockerignore
+
+# PyInstaller or other dist packaging output
+.dist/
+build/
