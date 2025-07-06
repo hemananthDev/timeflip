@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = 'timeflip-app'
         CONTAINER_NAME = 'timeflip-container'
+        PATH = "/usr/local/bin:$PATH"  // 👈 Ensure Jenkins finds aws CLI
     }
 
     stages {
@@ -32,12 +33,9 @@ pipeline {
         stage('Ensure Log Group Exists') {
             steps {
                 sh '''
-                    if ! aws logs describe-log-groups --log-group-name-prefix timeflip-logs \
-                         --region ap-south-1 | grep '"logGroupName": "timeflip-logs"' > /dev/null; then
+                    if ! aws logs describe-log-groups --log-group-name-prefix timeflip-logs --region ap-south-1 | grep "logGroupName"; then
                         echo "Creating CloudWatch Log Group: timeflip-logs"
                         aws logs create-log-group --log-group-name timeflip-logs --region ap-south-1
-                    else
-                        echo "✅ Log group already exists"
                     fi
                 '''
             }
