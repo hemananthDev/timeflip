@@ -1,0 +1,115 @@
+---
+- name: One-time Setup for TimeFlip Project on Ubuntu
+  hosts: all
+  become: yes
+
+  vars:
+    java_version: openjdk-17-jdk
+    flask_app_dir: /opt/timeflip
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+
+    - name: Install system dependencies
+      apt:
+        name:
+          - "{{ java_version }}"
+          - python3
+          - python3-pip
+          - python3-venv
+          - git
+          - curl
+          - docker.io
+          - gnupg2
+        state: present
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    - name: Add Jenkins APT repository
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+        filename: jenkins
+        state: present
+
+    - name: Update apt after adding Jenkins repo
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Ensure Jenkins home directory exists
+      file:
+        path: /var/lib/jenkins
+        state: directory
+        owner: jenkins
+        group: jenkins
+        recurse: yes
+
+    - name: Reload systemd (full re-exec)
+      command: systemctl daemon-reexec
+
+    - name: Reload systemd (lightweight reload)
+      command: systemctl daemon-reload
+
+    - name: Enable and start Jenkins service
+      systemd:
+        name: jenkins
+        enabled: yes
+        state: started
+
+    - name: Install Python packages required by Flask app
+      pip:
+        name:
+          - flask
+          - pymysql
+          - pytz
+        executable: pip3
+
+    - name: Create app directory
+      file:
+        path: "{{ flask_app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Install CloudWatch Agent
+      shell: |
+        curl -O https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+        dpkg -i amazon-cloudwatch-agent.deb
+      args:
+        chdir: /tmp
+      register: cw_agent_output
+      ignore_errors: yes
+
+    - name: Ensure CloudWatch Agent binary exists
+      stat:
+        path: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent
+      register: cloudwatch_status
+
+    - name: Start CloudWatch Agent (will configure later)
+      systemd:
+        name: amazon-cloudwatch-agent
+        enabled: yes
+        state: started
+      when: cloudwatch_status.stat.exists
+
+    - name: Print final message
+      debug:
+        msg: "✅ Instance is ready: Docker, Jenkins, Flask, and CloudWatch Agent installed."
+
