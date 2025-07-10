@@ -2,12 +2,12 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# 🗝️ Key Pair Path (Make sure this is valid from your system context)
+# 🗝️ Key Pair Path
 variable "public_key_path" {
   default = "D:/DevOps_Learning/docs/SSH Key/text-align-key.pub"
 }
 
-# 🔐 RDS Login Credentials
+# 🔐 RDS Credentials
 variable "db_username" {
   default = "admin"
 }
@@ -52,7 +52,6 @@ resource "aws_security_group" "timeflip_sg" {
   }
 
   egress {
-    description = "Allow all outbound"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -72,7 +71,6 @@ resource "aws_instance" "timeflip_ec2" {
     Name = "TimeFlip EC2"
   }
 
-  # 📝 Output public IP to file
   provisioner "local-exec" {
     command = "echo ${self.public_ip} > instance_ip.txt"
   }
@@ -100,13 +98,34 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-# 🛢️ RDS MySQL Instance
+# ✅ IAM Role for Enhanced Monitoring
+resource "aws_iam_role" "rds_monitoring_role" {
+  name = "rds-monitoring-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "monitoring.rds.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "rds_monitoring_policy" {
+  role       = aws_iam_role.rds_monitoring_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
+# 🛢️ RDS MySQL Instance with Logging & Monitoring
 resource "aws_db_instance" "timeflip_db" {
   identifier             = "timeflip-db"
   allocated_storage      = 20
   engine                 = "mysql"
   engine_version         = "8.0"
-  instance_class         = "db.t3.micro"  # ✅ Free tier compatible
+  instance_class         = "db.t3.micro"
   db_name                = "timeflip"
   username               = var.db_username
   password               = var.db_password
@@ -114,9 +133,16 @@ resource "aws_db_instance" "timeflip_db" {
   publicly_accessible    = false
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   deletion_protection    = false
+
+  # 🪵 CloudWatch Logs
+  enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
+
+  # 📊 Enhanced Monitoring
+  monitoring_role_arn = aws_iam_role.rds_monitoring_role.arn
+  monitoring_interval = 60
 }
 
-# 📤 Output: EC2 Public IP
+# 📤 Output: EC2 IP
 output "ec2_public_ip" {
   value = aws_instance.timeflip_ec2.public_ip
 }
@@ -124,4 +150,9 @@ output "ec2_public_ip" {
 # 📤 Output: RDS Endpoint
 output "rds_endpoint" {
   value = aws_db_instance.timeflip_db.endpoint
+}
+
+# (Optional) Output: Monitoring Role ARN
+output "rds_monitoring_role_arn" {
+  value = aws_iam_role.rds_monitoring_role.arn
 }
