@@ -1,2 +1,3 @@
-flask
+Flask
 pytz
+mysql-connector-python
