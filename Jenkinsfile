@@ -4,7 +4,9 @@ pipeline {
     environment {
         IMAGE_NAME = 'timeflip-app'
         CONTAINER_NAME = 'timeflip-container'
-        PATH = "/usr/local/bin:$PATH"
+        LOG_GROUP_NAME = 'timeflip-logs'
+        AWS_REGION = 'ap-south-1'
+        PATH = "/usr/bin:/usr/local/bin:$PATH"  // Ensure Jenkins sees aws and docker
     }
 
     stages {
@@ -17,6 +19,7 @@ pipeline {
         stage('Clean Previous Container and Image') {
             steps {
                 sh '''
+                    echo "🧹 Cleaning up old Docker container and image..."
                     docker stop $CONTAINER_NAME || true
                     docker rm $CONTAINER_NAME || true
                     docker rmi -f $IMAGE_NAME || true
@@ -27,6 +30,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
+                    echo "🐳 Building Docker image..."
                     set -e
                     docker build -t $IMAGE_NAME .
                 '''
@@ -36,10 +40,13 @@ pipeline {
         stage('Ensure Log Group Exists') {
             steps {
                 sh '''
+                    echo "🔍 Checking if CloudWatch log group exists..."
                     set -e
-                    if ! aws logs describe-log-groups --log-group-name-prefix timeflip-logs --region ap-south-1 | grep "logGroupName"; then
-                        echo "Creating CloudWatch Log Group: timeflip-logs"
-                        aws logs create-log-group --log-group-name timeflip-logs --region ap-south-1
+                    if ! aws logs describe-log-groups --log-group-name-prefix $LOG_GROUP_NAME --region $AWS_REGION | grep "logGroupName"; then
+                        echo "📘 Creating CloudWatch Log Group: $LOG_GROUP_NAME"
+                        aws logs create-log-group --log-group-name $LOG_GROUP_NAME --region $AWS_REGION
+                    else
+                        echo "✅ Log group already exists."
                     fi
                 '''
             }
@@ -48,12 +55,13 @@ pipeline {
         stage('Run New Container') {
             steps {
                 sh '''
+                    echo "🚀 Starting Docker container with awslogs driver..."
                     set -e
                     docker run -d --name $CONTAINER_NAME \
                       -p 5000:5000 \
                       --log-driver=awslogs \
-                      --log-opt awslogs-region=ap-south-1 \
-                      --log-opt awslogs-group=timeflip-logs \
+                      --log-opt awslogs-region=$AWS_REGION \
+                      --log-opt awslogs-group=$LOG_GROUP_NAME \
                       --log-opt awslogs-stream=$CONTAINER_NAME \
                       $IMAGE_NAME
                 '''
