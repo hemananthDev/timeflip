@@ -8,17 +8,17 @@
     <div class="container">
         <h1>🕒 IST ↔ EST Time Converter</h1>
         <form method="POST">
-            <label for="input_time">Time (HH:MM):</label>
-            <input type="text" name="input_time" required placeholder="e.g. 13:45">
+            <label for="input_time">Time:</label>
+            <input type="datetime-local" name="input_time" required>
 
-            <label for="from_zone">From:</label>
-            <select name="from_zone">
+            <label for="from_timezone">From:</label>
+            <select name="from_timezone">
                 <option value="Asia/Kolkata">IST (Asia/Kolkata)</option>
                 <option value="US/Eastern">EST (US/Eastern)</option>
             </select>
 
-            <label for="to_zone">To:</label>
-            <select name="to_zone">
+            <label for="to_timezone">To:</label>
+            <select name="to_timezone">
                 <option value="Asia/Kolkata">IST (Asia/Kolkata)</option>
                 <option value="US/Eastern">EST (US/Eastern)</option>
             </select>
